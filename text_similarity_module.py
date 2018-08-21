@@ -2,6 +2,7 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 import os
+import time
 
 # function for loading diffrenet module
 def loading_module(path, module_url = None):
@@ -12,21 +13,28 @@ def loading_module(path, module_url = None):
             embed_object = hub.Module(module_url)
         else:
             embed_object = hub.Module(hub.load_module_spec(path))
-    return embed_object, g
+    sess = tf.InteractiveSession(graph = g)
+    sess.run([tf.global_variables_initializer(), tf.tables_initializer()])
+
+    return embed_object, g, sess
 
 # function for runinng embedding module on text
-def run_embedding(embed_object, graph, text):
+def run_embedding(embed_object, graph, sess, text):
     # Reduce logging output.
     tf.logging.set_verbosity(tf.logging.ERROR)
     with graph.as_default():
         similarity_input_placeholder = tf.placeholder(tf.string, shape=(None))
         encoding_tensor = embed_object(similarity_input_placeholder)
-    with tf.Session(graph = graph) as sess:
-        sess.run([tf.global_variables_initializer(), tf.tables_initializer()])
         message_embeddings = sess.run(encoding_tensor, feed_dict = {similarity_input_placeholder:text})
 
     return message_embeddings
 
+embed_object, graph, sess = loading_module('E:/Hamed/Projects/Python/Text Similarity/module/tfhub_modules/1fb57c3ffe1a38479233ee9853ddd7a8ac8a8c47')
+start_time = time.time()
+run_embedding(embed_object, graph, sess, ['sth to be transformed', 'sth else to be transformed',
+                                          'another thing to be transformed', 'yes it is not different'])
+end_time = time.time()
+print(end_time - start_time)
 # function for calculating similarity between question and text
 def calculating_similarity_tensor(module_url, question, text):
     question_tensor = tf.Variable(tf.convert_to_tensor(run_embedding(loading_module(module_url), question)))
