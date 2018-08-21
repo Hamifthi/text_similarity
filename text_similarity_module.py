@@ -6,20 +6,24 @@ import os
 # function for loading diffrenet module
 def loading_module(path, module_url = None):
     # Import the Universal Sentence Encoder's TF Hub module
-    if module_url != None:
-        embed_object = hub.Module(module_url)
-    else:
-        embed_object = hub.Module(hub.load_module_spec(path))
-    return embed_object
+    g = tf.Graph()
+    with g.as_default():
+        if module_url != None:
+            embed_object = hub.Module(module_url)
+        else:
+            embed_object = hub.Module(hub.load_module_spec(path))
+    return embed_object, g
 
 # function for runinng embedding module on text
-def run_embedding(embed_object, text):
+def run_embedding(embed_object, graph, text):
     # Reduce logging output.
     tf.logging.set_verbosity(tf.logging.ERROR)
-
-    with tf.Session() as session:
-        session.run([tf.global_variables_initializer(), tf.tables_initializer()])
-        message_embeddings = session.run(embed_object(text))
+    with graph.as_default():
+        similarity_input_placeholder = tf.placeholder(tf.string, shape=(None))
+        encoding_tensor = embed_object(similarity_input_placeholder)
+    with tf.Session(graph = graph) as sess:
+        sess.run([tf.global_variables_initializer(), tf.tables_initializer()])
+        message_embeddings = sess.run(encoding_tensor, feed_dict = {similarity_input_placeholder:text})
 
     return message_embeddings
 
