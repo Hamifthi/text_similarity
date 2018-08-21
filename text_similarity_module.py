@@ -1,11 +1,15 @@
 import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
+import os
 
 # function for loading diffrenet module
-def loading_module(module_url):
+def loading_module(path, module_url = None):
     # Import the Universal Sentence Encoder's TF Hub module
-    embed_object = hub.Module(module_url)
+    if module_url != None:
+        embed_object = hub.Module(module_url)
+    else:
+        embed_object = hub.Module(hub.load_module_spec(path))
     return embed_object
 
 # function for runinng embedding module on text
