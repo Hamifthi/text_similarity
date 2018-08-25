@@ -31,5 +31,13 @@ def update_contents(title):
     database.Tensor_content.objects(title = id).update(set__tensor = tensor_object)
     return ("content successfully updated", 200)
 
+@app.route('/delete_contents/<title>', methods=["DELETE"])
+def delete_contents(title):
+    id = database.Title.objects(title = title)[0].id
+    database.Title.objects(title = title).delete()
+    database.Text_content.objects(title = id).delete()
+    database.Tensor_content.objects(title = id).delete()
+    return ("content successfully deleted", 202)
+
 if __name__ == '__main__':
     app.run(debug = True)
