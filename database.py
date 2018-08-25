@@ -1,11 +1,13 @@
 from flask import Flask
-from flask_mongoalchemy import MongoAlchemy
+from flask_mongoengine import MongoEngine
 from mongoengine import *
 import datetime
 
 app = Flask(__name__)
-app.config['MONGOALCHEMY_DATABASE'] = 'text_similarity'
-db = MongoAlchemy(app)
+app.config['MONGODB_DB'] = 'text_similarity'
+app.config['MONGODB_HOST'] = 'mongodb://localhost/text_similarity'
+app.config['MONGODB_PORT'] = 27017
+db = MongoEngine(app)
 
 class Title(Document):
     title = StringField(required = True, unique = True)
