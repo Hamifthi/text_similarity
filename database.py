@@ -21,3 +21,8 @@ class Tensor_content(Document):
     title = ReferenceField(Title)
     tensor = ListField(ListField(FloatField()))
     time = DateTimeField(default =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+class All_contents(Document):
+    titles = ListField(StringField())
+    last_title = StringField()
+    tensors = ListField(ListField(ListField()))
