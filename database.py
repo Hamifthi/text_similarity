@@ -29,4 +29,4 @@ class Tensor_content(Document):
 
 class All_contents(Document):
     titles = ListField(StringField())
-    tensors = ListField(ListField(ListField(FloatField())))
+    tensors = ListField(ListField(FloatField()))
