@@ -22,15 +22,13 @@ if 'All_contents' not in db_object.collection_names():
 def create_contents():
     title = database.Title(title = request.json['title'])
     title.save()
-    database.All_contents.objects().update(push__titles = request.json['title'], set__last_title = request.json['title'])
-    text = database.Text_content(title = title, text = request.json['text'])
-    text.save()
+    database.All_contents.objects().update(push__titles = request.json['title'])
+    database.Text_content(title = title, text = request.json['text']).save()
     tensor_object = text_similarity_module.run_embedding(request.json['text'], graph,
                                                         embed_object, similarity_input_placeholder,
                                                         encoding_tensor, session)
-    database.All_contents.objects().update(push__tensors = text_similarity_module.tensor_object)
-    tensor = database.Tensor_content(title = title, tensor = tensor_object)
-    tensor.save()
+    database.All_contents.objects().update(push_all__tensors = tensor_object)
+    database.Tensor_content(title = title, tensor = tensor_object).save()
     return ('content successfully created', 201)
 
 @app.route('/update_contents/<title>', methods=["POST"])
@@ -48,8 +46,17 @@ def delete_contents(title):
     id = database.Title.objects(title = title)[0].id
     database.Title.objects(title = title).delete()
     database.Text_content.objects(title = id).delete()
-    # database.Tensor_content.objects(title = id).delete()
+    database.Tensor_content.objects(title = id).delete()
     return ("content successfully deleted", 202)
+
+@app.route('/ask', methods=["POST"])
+def ask():
+    question = request.json['question']
+    question_tensor = text_similarity_module.run_embedding(question, graph,
+                                                        embed_object, similarity_input_placeholder,
+                                                        encoding_tensor, session)
+    database.Question(question = question, question_tensor = question_tensor).save()
+    return ('content successfully created', 201)
 
 if __name__ == '__main__':
     app.run(debug = True)

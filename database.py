@@ -17,6 +17,11 @@ class Text_content(Document):
     text = ListField(StringField())
     time = DateTimeField(default =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
+class Question(Document):
+    question = StringField()
+    question_tensor = ListField(ListField(FloatField()))
+    time = DateTimeField(default =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
 class Tensor_content(Document):
     title = ReferenceField(Title)
     tensor = ListField(ListField(FloatField()))
@@ -24,5 +29,4 @@ class Tensor_content(Document):
 
 class All_contents(Document):
     titles = ListField(StringField())
-    last_title = StringField()
-    tensors = ListField(ListField(ListField()))
+    tensors = ListField(ListField(ListField(FloatField())))
