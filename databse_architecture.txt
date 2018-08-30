@@ -1,0 +1,31 @@
+1. Document
+     -Array of Sentence ids
+
+2. Sentence
+     -ref to documentId
+
+3. SentenceTensor
+     -ref to sentenceId
+
+4. question
+     -title
+     -dateTime
+     -result --> array [ sentence ] -> each sentence = {text, tensor}
+
+onCreate --> 
+     first create Document without Sentences --> 
+          create each sentence with ref of document --> 
+               create sentenceTensor for each sentence with ref of sentenceId -->
+                    at last push sentenceId in Document sentences field and when all sentences were added save the Document
+
+onDelete -->
+     find the Document and then find sentences 
+          for each sentence remove sentenceTensor from db 
+               then remove sentence 
+                    when all sentences were removed from db remove the document
+
+onEdit --> 
+     find the document add new sentences and sentenceTensors
+          then we remove old sentences and refrences from the sentenceIds field of Document
+               then we push new refrences to sentenceIds field
+
