@@ -24,8 +24,8 @@ def run_embedding(text, graph, embed_object, similarity_input_placeholder, encod
     return message_embeddings
 
 def calculating_similarity_tensor():
-    question_tensor = tf.placeholder(tf.float32, shape(1, 512))
-    text_tensor = tf.placeholder(tf.float32, shape(-1, 512))
+    question_tensor = tf.placeholder(tf.float32, shape = (1, 512))
+    text_tensor = tf.placeholder(tf.float32, shape = (None, 512))
     multiply_tensor = tf.matmul(question_tensor, text_tensor, transpose_b = True)
     session = tf.train.MonitoredSession()
     return lambda x, y: session.run(multiply_tensor, feed_dict = {question_tensor: x, text_tensor: y})

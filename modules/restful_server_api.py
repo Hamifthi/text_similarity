@@ -62,7 +62,8 @@ def ask():
     question_tensor = text_similarity_module.produce_fake_tensorobject(1)
     database.Question(question = question, question_tensor = question_tensor).save()
     content_tensor = database.All_contents.objects().get().tensors
-    all_content_score = module_calculate(question_tensor, text_tensor)
+    all_content_score = module_calculate(question_tensor, content_tensor)
+    print(all_content_score)
     return ('content successfully created', 201)
 
 if __name__ == '__main__':
