@@ -1,0 +1,9 @@
+asking a question from text_similarity:
+     step1: get the question text from request
+     step2: create a tensor from question text
+     step3: find all of tensors from sentenceTensor collection
+     step4: found data will be sent to text_similarity_module alongside with the questions tensor
+          and gets the result of each sentenceTensor score of similarity
+     step5: bringing the sentence text for each of sentences and put it alongside of the score
+     step6: calculate and add jaccard similarity score for selected sentences and sort the results by score
+     step7: returning the data ;)
