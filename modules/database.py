@@ -9,24 +9,20 @@ app.config['MONGODB_HOST'] = 'mongodb://localhost/text_similarity'
 app.config['MONGODB_PORT'] = 27017
 db = MongoEngine(app)
 
-class Title(Document):
+class Content(Document):
     title = StringField(required = True, unique = True)
+    array_of_ids = ListField(ReferenceField(Sentence))
 
-class Text_content(Document):
-    title = ReferenceField(Title)
-    text = ListField(StringField())
-    time = DateTimeField(default =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+class Sentence(Document):
+    content_referecnce = ReferenceField(Content)
+    text = StringField()
+
+class Sentence_Tensor(Document):
+    sentence_referecnce = ReferenceField(Title)
+    tensor = ListField(ListField(FloatField()))
 
 class Question(Document):
-    question = StringField()
+    text = StringField()
     question_tensor = ListField(ListField(FloatField()))
     time = DateTimeField(default =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-class Tensor_content(Document):
-    title = ReferenceField(Title)
-    tensor = ListField(ListField(FloatField()))
-    time = DateTimeField(default =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-class All_contents(Document):
-    titles = ListField(StringField())
-    tensors = ListField(ListField(FloatField()))
+    result = ListField(DictField())
