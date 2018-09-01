@@ -36,15 +36,28 @@ def create_contents():
         sentence_tensor = database.Sentence_Tensor(sentence_referecnce = ids[number], tensor = tensor_object[number]).save()
     return ('content successfully created', 201)
 
-@app.route('/update_contents/<title>', methods=["POST"])
-def update_contents(title):
-    id = database.Title.objects(title = title)[0].id
-    database.Text_content.objects(title = id).update(set__text = request.json['text'])
-    # tensor_object = text_similarity_module.run_embedding(request.json['text'], graph,
-    #                                                     embed_object, similarity_input_placeholder,
-    #                                                     encoding_tensor, session)
+@app.route('/update_contents', methods=["POST"])
+def update_contents():
+    # first find the content and save old ids then delete old ids from content collection in database also delete old sentences content refrences
+    content = database.Content.objects(title = request.json['title']).get()
+    old_ids = [object.id for object in content.array_of_ids]
+    database.Content.objects(title = request.json['title']).update(unset__array_of_ids = 0)
+    database.Sentence.objects(content_referecnce = content).update(unset__content_referecnce = 0)
+    # recreate new sentences with reference to content and tensors with reference to new sentences also save new sentences's ids in array of ids
+    for sentence in request.json['text']:
+        text = database.Sentence(content_referecnce = content, text = sentence).save()
+    ids = database.Sentence.objects(content_referecnce = content).distinct('_id')
+    database.Content.objects(title = request.json['title']).update(push_all__array_of_ids = ids)
+    '''tensor_object = text_similarity_module.run_embedding(request.json['text'], graph,
+                                                        embed_object, similarity_input_placeholder,
+                                                        encoding_tensor, session)'''
     tensor_object = text_similarity_module.produce_fake_tensorobject(len(request.json['text']))
-    database.Tensor_content.objects(title = id).update(set__tensor = tensor_object)
+    for number in range(len(tensor_object)):
+        sentence_tensor = database.Sentence_Tensor(sentence_referecnce = ids[number], tensor = tensor_object[number]).save()
+    # delete old sentences that don't have content reference also delete old tensors with the ids of old sentences
+    database.Sentence.objects(content_referecnce = None).delete()
+    for id in old_ids:
+        database.Sentence_Tensor.objects(sentence_referecnce = id).delete()
     return ("content successfully updated", 200)
 
 @app.route('/delete_contents/<title>', methods=["DELETE"])
