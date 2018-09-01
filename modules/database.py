@@ -11,18 +11,21 @@ db = MongoEngine(app)
 
 class Content(Document):
     title = StringField(required = True, unique = True)
-    array_of_ids = ListField(ReferenceField(Sentence))
+    array_of_ids = ListField(ReferenceField('Sentence'))
 
 class Sentence(Document):
     content_referecnce = ReferenceField(Content)
     text = StringField()
 
 class Sentence_Tensor(Document):
-    sentence_referecnce = ReferenceField(Title)
-    tensor = ListField(ListField(FloatField()))
+    sentence_referecnce = ReferenceField(Sentence)
+    tensor = ListField(FloatField())
 
 class Question(Document):
     text = StringField()
     question_tensor = ListField(ListField(FloatField()))
     time = DateTimeField(default =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     result = ListField(DictField())
+
+if __name__ == '__main__':
+    main()

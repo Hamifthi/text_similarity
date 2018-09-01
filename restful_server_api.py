@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 from pymongo import MongoClient
+import sys
+sys.path.append('E:/Hamed/Projects/Python/Text Similarity/modules')
 import text_similarity_module
 import database
 import numpy as np
@@ -11,27 +13,27 @@ app = Flask(__name__)
 db = MongoEngine(app)
 
 # graph, embed_object, similarity_input_placeholder, encoding_tensor, session = text_similarity_module.loading_module('E:/Hamed/Projects/Python/Text Similarity/module/tfhub_modules/1fb57c3ffe1a38479233ee9853ddd7a8ac8a8c47')
-module_calculate = text_similarity_module.calculating_similarity_tensor()
 
 connection = MongoClient('localhost', 27017)
 db_object = connection['text_similarity']
 
-if 'All_contents' not in db_object.collection_names():
-    database.All_contents.objects().update(set__titles = [], upsert = True)
-
 @app.route('/create_contents', methods=["POST"])
 def create_contents():
-    title = database.Title(title = request.json['title'])
-    title.save()
-    database.All_contents.objects().update(push__titles = request.json['title'])
-    database.Text_content(title = title, text = request.json['text']).save()
-    # tensor_object = text_similarity_module.run_embedding(request.json['text'], graph,
-    #                                                     embed_object, similarity_input_placeholder,
-    #                                                     encoding_tensor, session)
+    # first create a content with a title and an empty array of sentence ids
+    content = database.Content(title = request.json['title']).save()
+    # create individual sentences with a text and a reference to the content it belogs
+    for sentence in request.json['text']:
+        text = database.Sentence(content_referecnce = content, text = sentence).save()
+    # get all of sentences's ids that belogs to that specific content and save it in the array ids for that content
+    ids = database.Sentence.objects(content_referecnce = content).distinct('_id')
+    database.Content.objects(title = request.json['title']).update(push_all__array_of_ids = ids)
+    '''tensor_object = text_similarity_module.run_embedding(request.json['text'], graph,
+                                                        embed_object, similarity_input_placeholder,
+                                                        encoding_tensor, session)'''
+    # once calculate the sentences tensor of specific content and then save the tensors one by one with the id of it's sentences
     tensor_object = text_similarity_module.produce_fake_tensorobject(len(request.json['text']))
-    array_of_tensors = np.vstack((np.array(database.All_contents.objects().get().tensors).reshape(-1, 512), tensor_object))
-    database.All_contents.objects().update(set__tensors = array_of_tensors)
-    database.Tensor_content(title = title, tensor = tensor_object).save()
+    for number in range(len(tensor_object)):
+        sentence_tensor = database.Sentence_Tensor(sentence_referecnce = ids[number], tensor = tensor_object[number]).save()
     return ('content successfully created', 201)
 
 @app.route('/update_contents/<title>', methods=["POST"])
