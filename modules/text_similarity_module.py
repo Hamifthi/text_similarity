@@ -23,13 +23,14 @@ def run_embedding(text, graph, embed_object, similarity_input_placeholder, encod
         message_embeddings = session.run(encoding_tensor, feed_dict = {similarity_input_placeholder:text})
     return message_embeddings
 
-def calculating_similarity_tensor(question_tensor, text_tensor):
+def calculating_similarity_tensor(question_tensor, content_tensor):
     question_placeholder = tf.placeholder(tf.float32, shape = (1, 512))
-    text_placeholder = tf.placeholder(tf.float32, shape = (None, 512))
-    multiply_tensor = tf.matmul(question_tensor, text_tensor, transpose_b = True)
+    content_placeholder = tf.placeholder(tf.float32, shape = (None, 512))
+    multiply_tensor = tf.matmul(question_placeholder, content_placeholder, transpose_b = True)
     with tf.Session() as sess:
       sess.run(tf.global_variables_initializer())
-      sess.run(multiply_tensor, feed_dict = {question_placeholder: question_tensor, text_placeholder: text_tensor})
+      score = sess.run(multiply_tensor, feed_dict = {question_placeholder: question_tensor, content_placeholder: content_tensor})
+    return score
 
 def produce_fake_tensorobject(number_of_sentences):
     return np.random.uniform(-1, 1, (number_of_sentences, 512))

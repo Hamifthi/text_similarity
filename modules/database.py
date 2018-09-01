@@ -22,7 +22,7 @@ class Sentence_Tensor(Document):
     tensor = ListField(FloatField())
 
 class Question(Document):
-    text = StringField()
+    text = StringField(required = True, unique = True)
     question_tensor = ListField(ListField(FloatField()))
     time = DateTimeField(default =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     result = ListField(DictField())

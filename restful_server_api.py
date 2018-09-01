@@ -78,14 +78,21 @@ def delete_contents(title):
 @app.route('/ask', methods=["POST"])
 def ask():
     question = request.json['question']
-    # question_tensor = text_similarity_module.run_embedding(question, graph,
-    #                                                     embed_object, similarity_input_placeholder,
-    #                                                     encoding_tensor, session)
+    '''question_tensor = text_similarity_module.run_embedding(question, graph,
+                                                        embed_object, similarity_input_placeholder,
+                                                        encoding_tensor, session)'''
     question_tensor = text_similarity_module.produce_fake_tensorobject(1)
-    database.Question(question = question, question_tensor = question_tensor).save()
-    content_tensor = database.All_contents.objects().get().tensors
-    all_content_score = module_calculate(question_tensor, content_tensor)
-    print(all_content_score)
+    try:
+        database.Question(text = question, question_tensor = question_tensor).save()
+    except:
+        return ('question already asked before', 409)
+    
+    tensors_objects = database.Sentence_Tensor.objects().all()
+    content_tensor = np.array([tensor_object.tensor for tensor_object in tensors_objects])
+    sentences = np.array([tensor_object.sentence_referecnce.id for tensor_object in tensors_objects]).reshape(-1, 1)
+    all_content_score = text_similarity_module.calculating_similarity_tensor(question_tensor, content_tensor).reshape(-1, 1)
+    all_content_score = np.hstack([all_content_score, sentences])
+    all_content_score = all_content_score[all_content_score[:, 0].argsort()]
     return ('content successfully created', 201)
 
 if __name__ == '__main__':
