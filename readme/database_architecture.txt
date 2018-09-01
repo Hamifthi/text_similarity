@@ -8,7 +8,7 @@
      -ref to sentenceId
 
 4. question
-     -title
+     -text
      -dateTime
      -result --> array [ sentence ] -> each sentence = {text, tensor}
 

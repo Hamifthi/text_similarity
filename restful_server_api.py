@@ -62,10 +62,17 @@ def update_contents():
 
 @app.route('/delete_contents/<title>', methods=["DELETE"])
 def delete_contents(title):
-    id = database.Title.objects(title = title)[0].id
-    database.Title.objects(title = title).delete()
-    database.Text_content.objects(title = id).delete()
-    database.Tensor_content.objects(title = id).delete()
+    # first find content
+    content = database.Content.objects(title = title).get()
+    # get all senteces objects that belongs to founded content
+    sentences = database.Sentence.objects(content_referecnce = content).all()
+    # deletes all tensor objects belongs to sentences
+    for sentence_object in sentences:
+        database.Sentence_Tensor.objects(sentence_referecnce = sentence_object.id).delete()
+    # delete all sentences
+    database.Sentence.objects(content_referecnce = content).delete()
+    # delete content
+    database.Content.objects(title = title).delete()
     return ("content successfully deleted", 202)
 
 @app.route('/ask', methods=["POST"])
