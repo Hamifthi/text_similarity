@@ -34,3 +34,18 @@ def calculating_similarity_tensor(question_tensor, content_tensor):
 
 def produce_fake_tensorobject(number_of_sentences):
     return np.random.uniform(-1, 1, (number_of_sentences, 512))
+
+# function for calculating jaccard similarity between two sentences
+def get_Jaccard_similarity(question, sentence):
+    question_splitted = set(question.split())
+    sentence_splitted = set(sentence.split())
+    intersection_question_sentence = question_splitted.intersection(sentence_splitted)
+    return len(intersection_question_sentence) / (len(question_splitted) + len(sentence_splitted) - 
+               len(intersection_question_sentence))
+
+
+# function for returning filtering dissimilar sentences to question
+def find_Jaccard_similarity(question, text):
+    jaccard_similarity_score = np.array([get_Jaccard_similarity(question, sentence) for sentence in text]).reshape(-1, 1)
+    result = np.hstack([jaccard_similarity_score, np.array(text).reshape(-1, 1)])
+    return result
