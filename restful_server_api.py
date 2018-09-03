@@ -12,7 +12,7 @@ import numpy as np
 app = Flask(__name__)
 db = MongoEngine(app)
 
-# graph, embed_object, similarity_input_placeholder, encoding_tensor, session = text_similarity_module.loading_module('E:/Hamed/Projects/Python/Text Similarity/module/tfhub_modules/1fb57c3ffe1a38479233ee9853ddd7a8ac8a8c47')
+graph, embed_object, similarity_input_placeholder, encoding_tensor, session = text_similarity_module.loading_module('E:/Hamed/Projects/Python/Text Similarity/Tensorflow Hub Module/tfhub_modules/1fb57c3ffe1a38479233ee9853ddd7a8ac8a8c47')
 
 connection = MongoClient('localhost', 27017)
 db_object = connection['text_similarity']
@@ -27,11 +27,10 @@ def create_contents():
     # get all of sentences's ids that belogs to that specific content and save it in the array ids for that content
     ids = database.Sentence.objects(content_reference = content).distinct('_id')
     database.Content.objects(title = request.json['title']).update(push_all__array_of_ids = ids)
-    '''tensor_object = text_similarity_module.run_embedding(request.json['text'], graph,
-                                                        embed_object, similarity_input_placeholder,
-                                                        encoding_tensor, session)'''
     # once calculate the sentences tensor of specific content and then save the tensors one by one with the id of it's sentences
-    tensor_object = text_similarity_module.produce_fake_tensorobject(len(request.json['text']))
+    tensor_object = text_similarity_module.run_embedding(request.json['text'], graph,
+                                                        embed_object, similarity_input_placeholder,
+                                                        encoding_tensor, session)
     for number in range(len(tensor_object)):
         sentence_tensor = database.Sentence_Tensor(sentence_reference = ids[number], tensor = tensor_object[number]).save()
     return ('content successfully created', 201)
@@ -48,10 +47,9 @@ def update_contents():
         text = database.Sentence(content_reference = content, text = sentence).save()
     ids = database.Sentence.objects(content_reference = content).distinct('_id')
     database.Content.objects(title = request.json['title']).update(push_all__array_of_ids = ids)
-    '''tensor_object = text_similarity_module.run_embedding(request.json['text'], graph,
+    tensor_object = text_similarity_module.run_embedding(request.json['text'], graph,
                                                         embed_object, similarity_input_placeholder,
-                                                        encoding_tensor, session)'''
-    tensor_object = text_similarity_module.produce_fake_tensorobject(len(request.json['text']))
+                                                        encoding_tensor, session)
     for number in range(len(tensor_object)):
         sentence_tensor = database.Sentence_Tensor(sentence_reference = ids[number], tensor = tensor_object[number]).save()
     # delete old sentences that don't have content reference also delete old tensors with the ids of old sentences
@@ -77,17 +75,16 @@ def delete_contents(title):
 
 @app.route('/ask', methods=["POST"])
 def ask():
-    # first create a variable called question to work simpler with it then question tensor and save it on database
+    # create a variable called question to work simpler with it then calculate question tensor and save it on database
     question = request.json['question']
-    '''question_tensor = text_similarity_module.run_embedding(question, graph,
+    question_tensor = text_similarity_module.run_embedding([question], graph,
                                                         embed_object, similarity_input_placeholder,
-                                                        encoding_tensor, session)'''
-    question_tensor = text_similarity_module.produce_fake_tensorobject(1)
+                                                        encoding_tensor, session)
+    # check the question is not present in database
     try:
         database.Question(text = question, question_tensor = question_tensor).save()
     except:
         return ('question already asked before', 409)
-    
     # get all tensor objects from database for calculating similarity and also sentences reference for specify which score is for which sentence
     tensor_objects = database.Sentence_Tensor.objects().all()
     content_tensor = np.array([tensor_object.tensor for tensor_object in tensor_objects])
@@ -95,16 +92,16 @@ def ask():
     # similarity calculation part
     all_content_score = text_similarity_module.calculating_similarity_tensor(question_tensor, content_tensor).reshape(-1, 1)
     # stacking scores with ids
-    all_content_score = np.hstack([all_content_score, sentences_id])
+    all_content_score_and_reference = np.hstack([all_content_score, sentences_id])
     # order the scores in decreasing order
-    all_content_score = all_content_score[all_content_score[:, 0].argsort()][-10:]
+    all_content_score_and_reference = all_content_score_and_reference[all_content_score_and_reference[:, 0].argsort()][-10:]
     # putting all sentences in one list for calculating jaccard similarity
-    all_sentences = [database.Sentence.objects(id = sentence_id).get().text for sentence_id in all_content_score[:, 1]]
+    all_sentences = [database.Sentence.objects(id = sentence_id).get().text for sentence_id in all_content_score_and_reference[:, 1]]
     # calculating jaccard similarity
     jaccard = text_similarity_module.find_Jaccard_similarity(question, all_sentences)
     # print(all_sentences)
-    sum_module_jaccard = np.add(all_content_score[:, 0], jaccard[:, 0].astype('float')).reshape(-1, 1)
-    all_content_score_and_reference = np.hstack([sum_module_jaccard, np.array(all_content_score[:, 1]).reshape(-1, 1)])
+    sum_module_jaccard = np.add(all_content_score_and_reference[:, 0], jaccard[:, 0].astype('float')).reshape(-1, 1)
+    all_content_score_and_reference = np.hstack([sum_module_jaccard, np.array(all_content_score_and_reference[:, 1]).reshape(-1, 1)])
     # create a list of results that are return as responce
     responce = []
     for i in range(len(all_content_score_and_reference)):
