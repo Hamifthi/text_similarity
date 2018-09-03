@@ -14,18 +14,18 @@ class Content(Document):
     array_of_ids = ListField(ReferenceField('Sentence'))
 
 class Sentence(Document):
-    content_referecnce = ReferenceField(Content)
+    content_reference = ReferenceField(Content)
     text = StringField()
 
 class Sentence_Tensor(Document):
-    sentence_referecnce = ReferenceField(Sentence)
+    sentence_reference = ReferenceField(Sentence)
     tensor = ListField(FloatField())
 
 class Question(Document):
     text = StringField(required = True, unique = True)
     question_tensor = ListField(ListField(FloatField()))
     time = DateTimeField(default =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    result = ListField(DictField())
+    result = ListField(ListField(StringField()))
 
 if __name__ == '__main__':
     main()
